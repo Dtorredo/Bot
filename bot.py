@@ -1,19 +1,21 @@
+import os
 import requests
 import time
 import hmac
 import hashlib
 import json
 from datetime import datetime
+from threading import Thread
+from flask import Flask
 
 # === CONFIG ===
-import os
-
 API_KEY = os.getenv('API_KEY')
 API_SECRET = os.getenv('API_SECRET')
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN')
 TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID')
+CHECK_INTERVAL = 10  # seconds
 
-# === MESSAGE TEMPLATE ===
+# === MESSAGES ===
 WELCOME_MESSAGE = "Hello! 👋 Thanks for choosing to trade with me."
 BANK_DETAILS = """Please send payment to:
 🏦 Bank: Equity Bank
@@ -54,7 +56,7 @@ def send_message(trade_id, message):
     call_api('POST', path, {"message": message})
     print(f"[{datetime.now()}] Sent to {trade_id}: {message[:30]}...")
 
-# === MAIN LOOP ===
+# === MAIN BOT LOOP ===
 seen_trades = set()
 
 def auto_trade_bot():
@@ -79,6 +81,14 @@ def auto_trade_bot():
 
         time.sleep(CHECK_INTERVAL)
 
-# === START ===
-if __name__ == "__main__":
-    auto_trade_bot()
+# === FLASK APP ===
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "🚀 Noones Bot is running."
+
+# === START EVERYTHING ===
+if __name__ == '__main__':
+    Thread(target=auto_trade_bot).start()
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
